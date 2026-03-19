@@ -1,6 +1,7 @@
 # 🏡 Rental-property-management-database 
 A MySQL rental property management database for tracking properties, units, clients, leases, payments, maintenance, Inspections and staff workflows.
-The system is designed to support the day-to-day operations of a rental property business by storing and relating data about;
+The system is designed to support the day-to-day operations of a rental property business by storing and relating data about; <img width="1538" height="1093" alt="EER diagram property management company" src="https://github.com/user-attachments/assets/fc081966-f8e2-4389-9ba3-836e73d8fbd9" />
+
 - properties & units
 - landlords, tenants, and other clients
 - lease agreements
