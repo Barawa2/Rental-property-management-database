@@ -14,9 +14,9 @@ The system is designed to support the day-to-day operations of a rental property
   The goal of the schema is not just to store data, but to reflect how rental management works in the real world while preserving historical accuracy and enforcing data integrity.
 
   ## Key design ideas
-   **Clients are stored in a single `clients` table**  
+ -  **Clients are stored in a single `clients` table**  
     Instead of separating landlords and tenants into different tables, this system uses a `client_type_id` to classify each client. This makes the schema more flexible and       avoids duplicate person records.
-  **Payments are tied to leases, not just clients or units**  
+-  **Payments are tied to leases, not just clients or units**  
     This preserves historical accuracy because financial obligations belong to the lease agreement.
   **Properties and units are separated**  
     A property can contain multiple units, which makes the design suitable for apartments, mixed-use buildings, and commercial properties.
