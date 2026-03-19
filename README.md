@@ -96,4 +96,4 @@ Possible next steps for this project:
 - build a dashboard or frontend connected to the database
 
   This project is for learning, portfolio, and demonstration purposes.
-If you like the project, Don't forget to leave a star ⭐.
+- If you like the project, Don't forget to leave a star ⭐.
