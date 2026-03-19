@@ -1,4 +1,4 @@
-# Rental-property-management-database 
+# 🏡 Rental-property-management-database 
 A MySQL rental property management database for tracking properties, units, clients, leases, payments, maintenance, Inspections and staff workflows.
 The system is designed to support the day-to-day operations of a rental property business by storing and relating data about;
 - properties & units
@@ -13,23 +13,23 @@ The system is designed to support the day-to-day operations of a rental property
 
   The goal of the schema is not just to store data, but to reflect how rental management works in the real world while preserving historical accuracy and enforcing data integrity.
 
-  ## Key design ideas
+  ## 🔐 Key design ideas
  -  **Clients are stored in a single `clients` table**  
     Instead of separating landlords and tenants into different tables, this system uses a `client_type_id` to classify each client. This makes the schema more flexible and       avoids duplicate person records.
 -  **Payments are tied to leases, not just clients or units**  
     This preserves historical accuracy because financial obligations belong to the lease agreement.
-  **Properties and units are separated**  
+- **Properties and units are separated**  
     A property can contain multiple units, which makes the design suitable for apartments, mixed-use buildings, and commercial properties.
    **The schema supports both residential and commercial scenarios**  
   Some unit attributes such as bedrooms and bathrooms can be `NULL` where they do not apply.
-  **Open-ended leases are supported**  
+ - **Open-ended leases are supported**  
     `lease_end_date` can be `NULL` for month-to-month or ongoing agreements.
-  **Maintenance and inspections are treated as operational workflows**  
+ - **Maintenance and inspections are treated as operational workflows**  
     The database includes tables for maintenance requests, appointment scheduling, and inspection visits.
 
 ## Main tables
 Clients, client_types, properties, property_categories, units, unit_types, lease_payments, utility_bills, security deposit_returns, appointment_schedules, inspection_visits, maintenance_requests, staff_details, roles, staff_roles
-  ## Relationships snapshot 
+  ## Relationships snapshot 📸
 
 - One property can have many units
 - One unit can have many leases over time
@@ -46,7 +46,7 @@ Clients, client_types, properties, property_categories, units, unit_types, lease
 - maintenance requests default to a starting workflow status
 - the same client table can represent both individuals and companies
   
-## Files in this repository
+## 📂 Files in this repository 
 - rental dabase system 2 – table creation scripts
 - insertdata.sql – sample data inserts
 - update rental property documentation – project documentation
