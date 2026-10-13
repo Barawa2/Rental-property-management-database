@@ -16,9 +16,9 @@ The system is designed to support the day-to-day operations of a rental property
   <img width="1000" height="650" alt="EER diagram property management company" src="https://github.com/user-attachments/assets/fc081966-f8e2-4389-9ba3-836e73d8fbd9" />
 
   ## 🔐 Key design ideas
- -  **Clients are stored in a single `clients` table**  
-    Instead of separating landlords and tenants into different tables, this system uses a `client_type_id` to classify each client. This makes the schema more flexible and       avoids duplicate person records.
--  **Payments are tied to leases, not just clients or units**  
+ -  **Clients are stored in a single `clients` table**
+ -  Landlords and tenants are not separate tables. Each client can hold one or more types (Tenant, Landlord) through the `client_type_assignments` link table, so the same person or company can be both. This avoids duplicate person records.
+  **Payments are tied to leases, not just clients or units**  
     This preserves historical accuracy because financial obligations belong to the lease agreement.
 - **Properties and units are separated**  
     A property can contain multiple units, which makes the design suitable for apartments, mixed-use buildings, and commercial properties.
@@ -39,6 +39,7 @@ Clients, client_types, properties, property_categories, units, unit_types, lease
 - One lease can have many utility bills
 - Staff members can have multiple roles
 - Maintenance requests and inspections are linked to operational activity in the system
+- A client can hold several types (tenant, landlord) through client_type_assignments
 
 ## Business rules reflected in the schema
 
@@ -47,18 +48,26 @@ Clients, client_types, properties, property_categories, units, unit_types, lease
 - child records must reference existing parent records
 - maintenance requests default to a starting workflow status
 - the same client table can represent both individuals and companies
+  ## Built-in rules
+- a property's landlord must hold the Landlord type (checked by triggers on insert and update)
+- the Landlord type cannot be removed from a client who still owns properties
+- leases past their end date are expired daily by a scheduled event, and unit status follows the lease (Occupied when an active lease starts, Vacant when it ends)
+- a utility bill's unit must match the unit of its lease
   
 ## 📂 Files in this repository 
-- rental dabase system 2 – table creation scripts
+- propertymanagement_schema.sql – table, trigger and event creation script
 - insertdata.sql – sample data inserts
-- update rental property documentation – project documentation
+- EER diagram property management company – entity relationship diagram
+- updated_rental_property_documentation.docx – project documentation
+
 
 ## 🌩️ How to run the project
 
-1. Create a new MySQL database
-2. Run the table creation script (rental database system 2)
-3. Run the insert script to populate sample data (insert data)
-4. Use your SQL editor to test queries and inspect relationships
+1. Create a new, empty MySQL 8 database.
+2. Run `propertymanagement_schema.sql` (creates all tables, triggers and the lease-expiry event).
+3. Run `Insertdata.sql` in one session to load the sample data.
+4. Run the insert script to populate sample data (insert data)
+5. Use your SQL editor to test queries and inspect relationships.
 
 ## Example use cases
 
