@@ -46,7 +46,7 @@ CREATE TABLE `appointment_schedules` (
   CONSTRAINT `appointment_schedules_ibfk_1` FOREIGN KEY (`client_id`) REFERENCES `clients` (`client_id`),
   CONSTRAINT `appointment_schedules_ibfk_2` FOREIGN KEY (`staff_id`) REFERENCES `staff_details` (`staff_id`),
   CONSTRAINT `appointment_schedules_ibfk_3` FOREIGN KEY (`unit_id`) REFERENCES `units` (`unit_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -121,7 +121,7 @@ CREATE TABLE `client_types` (
   `type_name` varchar(30) NOT NULL,
   PRIMARY KEY (`client_type_id`),
   UNIQUE KEY `type_name` (`type_name`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -140,7 +140,7 @@ CREATE TABLE `clients` (
   `client_email` varchar(100) DEFAULT NULL,
   PRIMARY KEY (`client_id`),
   CONSTRAINT `check_name` CHECK (((`company_name` is not null) or ((`client_first_name` is not null) and (`client_last_name` is not null))))
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -165,7 +165,7 @@ CREATE TABLE `inspection_visits` (
   CONSTRAINT `inspection_visits_ibfk_1` FOREIGN KEY (`appointment_id`) REFERENCES `appointment_schedules` (`appointment_id`),
   CONSTRAINT `inspection_visits_ibfk_2` FOREIGN KEY (`inspected_by`) REFERENCES `staff_details` (`staff_id`),
   CONSTRAINT `inspection_visits_ibfk_3` FOREIGN KEY (`unit_id`) REFERENCES `units` (`unit_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -192,7 +192,7 @@ CREATE TABLE `lease_payments` (
   CONSTRAINT `lease_payments_ibfk_1` FOREIGN KEY (`lease_id`) REFERENCES `leases` (`lease_id`),
   CONSTRAINT `lease_payments_ibfk_2` FOREIGN KEY (`paid_by`) REFERENCES `clients` (`client_id`),
   CONSTRAINT `check_transaction_reference` CHECK ((((`payment_method` = _utf8mb4'Cash') and (`transaction_reference` is null)) or ((`payment_method` <> _utf8mb4'Cash') and (`transaction_reference` is not null))))
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -220,8 +220,34 @@ CREATE TABLE `leases` (
   KEY `tenant_id` (`tenant_id`),
   CONSTRAINT `leases_ibfk_1` FOREIGN KEY (`unit_id`) REFERENCES `units` (`unit_id`),
   CONSTRAINT `leases_ibfk_2` FOREIGN KEY (`tenant_id`) REFERENCES `clients` (`client_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `trg_leases_no_overlap_insert` BEFORE INSERT ON `leases` FOR EACH ROW BEGIN
+    IF NEW.lease_status <> 'Terminated' AND EXISTS (
+        SELECT 1 FROM leases l
+        WHERE l.unit_id = NEW.unit_id
+          AND l.lease_status <> 'Terminated'
+          AND l.lease_start_date < COALESCE(NEW.lease_end_date, '9999-12-31')
+          AND NEW.lease_start_date < COALESCE(l.lease_end_date, '9999-12-31')
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'This unit already has a lease covering those dates';
+    END IF;
+END */;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
@@ -234,6 +260,38 @@ DELIMITER ;;
 /*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `trg_leases_unit_status_insert` AFTER INSERT ON `leases` FOR EACH ROW BEGIN
     IF NEW.lease_status = 'Active' THEN
         UPDATE units SET unit_status = 'Occupied' WHERE unit_id = NEW.unit_id;
+    END IF;
+END */;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `trg_leases_no_overlap_update` BEFORE UPDATE ON `leases` FOR EACH ROW BEGIN
+    IF NEW.lease_status <> 'Terminated'
+       AND (NEW.unit_id <> OLD.unit_id
+            OR NEW.lease_start_date <> OLD.lease_start_date
+            OR NOT (NEW.lease_end_date <=> OLD.lease_end_date)
+            OR OLD.lease_status = 'Terminated')
+       AND EXISTS (
+            SELECT 1 FROM leases l
+            WHERE l.unit_id = NEW.unit_id
+              AND l.lease_id <> NEW.lease_id
+              AND l.lease_status <> 'Terminated'
+              AND l.lease_start_date < COALESCE(NEW.lease_end_date, '9999-12-31')
+              AND NEW.lease_start_date < COALESCE(l.lease_end_date, '9999-12-31')
+       ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'This unit already has a lease covering those dates';
     END IF;
 END */;;
 DELIMITER ;
@@ -292,7 +350,7 @@ CREATE TABLE `maintenance_requests` (
   CONSTRAINT `maintenance_requests_ibfk_1` FOREIGN KEY (`unit_id`) REFERENCES `units` (`unit_id`),
   CONSTRAINT `maintenance_requests_ibfk_2` FOREIGN KEY (`reported_by`) REFERENCES `clients` (`client_id`),
   CONSTRAINT `maintenance_requests_ibfk_3` FOREIGN KEY (`reported_to_staff_id`) REFERENCES `staff_details` (`staff_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -316,7 +374,7 @@ CREATE TABLE `properties` (
   KEY `property_category_id` (`property_category_id`),
   CONSTRAINT `properties_ibfk_1` FOREIGN KEY (`landlord_id`) REFERENCES `clients` (`client_id`),
   CONSTRAINT `properties_ibfk_2` FOREIGN KEY (`property_category_id`) REFERENCES `property_categories` (`property_category_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
@@ -384,7 +442,7 @@ CREATE TABLE `property_categories` (
   `category_description` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`property_category_id`),
   UNIQUE KEY `category_name` (`category_name`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -400,7 +458,7 @@ CREATE TABLE `roles` (
   `role_description` text,
   PRIMARY KEY (`role_id`),
   UNIQUE KEY `role_name` (`role_name`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -421,7 +479,7 @@ CREATE TABLE `security_deposit_returns` (
   PRIMARY KEY (`request_id`),
   KEY `lease_id` (`lease_id`),
   CONSTRAINT `security_deposit_returns_ibfk_1` FOREIGN KEY (`lease_id`) REFERENCES `leases` (`lease_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -440,7 +498,7 @@ CREATE TABLE `staff_details` (
   `hire_date` date NOT NULL,
   `status` enum('Active','Inactive') DEFAULT 'Active',
   PRIMARY KEY (`staff_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -472,7 +530,7 @@ CREATE TABLE `unit_types` (
   `unit_type_name` varchar(50) NOT NULL,
   PRIMARY KEY (`unit_type_id`),
   UNIQUE KEY `unit_type_name` (`unit_type_name`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -495,7 +553,7 @@ CREATE TABLE `units` (
   KEY `unit_type_id` (`unit_type_id`),
   CONSTRAINT `units_ibfk_1` FOREIGN KEY (`property_id`) REFERENCES `properties` (`property_id`),
   CONSTRAINT `units_ibfk_2` FOREIGN KEY (`unit_type_id`) REFERENCES `unit_types` (`unit_type_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -521,7 +579,7 @@ CREATE TABLE `utility_bills` (
   KEY `lease_id` (`lease_id`),
   CONSTRAINT `utility_bills_ibfk_1` FOREIGN KEY (`unit_id`) REFERENCES `units` (`unit_id`),
   CONSTRAINT `utility_bills_ibfk_2` FOREIGN KEY (`lease_id`) REFERENCES `leases` (`lease_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
@@ -601,4 +659,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-10-12  9:28:27
+-- Dump completed on 2026-11-19  8:32:38
