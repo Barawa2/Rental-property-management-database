@@ -44,7 +44,7 @@ Clients, client_types, properties, property_categories, units, unit_types, lease
 ## Business rules reflected in the schema
 
 - a lease may be fixed-term or ongoing
-- a unit can only be occupied by one active lease at a time
+- no two leases on the same unit can cover the same dates (renewals that start after the current lease ends are allowed
 - child records must reference existing parent records
 - maintenance requests default to a starting workflow status
 - the same client table can represent both individuals and companies
